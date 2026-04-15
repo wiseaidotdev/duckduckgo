@@ -5,9 +5,9 @@ authors = ["Mahmoud Harmouch <oss@wiseai.dev>"]
 edition = "2024"
 description = "🦆 A CLI and library for colorful DuckDuckGo searches."
 license = "MIT"
-homepage = "https://github.com/kevin-rs/duckduckgo"
+homepage = "https://github.com/wiseaidotdev/duckduckgo"
 documentation = "https://docs.rs/duckduckgo"
-repository = "https://github.com/kevin-rs/duckduckgo"
+repository = "https://github.com/wiseaidotdev/duckduckgo"
 keywords = ["cli", "duckduckgo", "search", "dorks", "api"]
 categories = [
     "command-line-utilities",
@@ -16,25 +16,30 @@ categories = [
     "text-processing",
     "accessibility"
 ]
+exclude = ["/tests", ".*"]
 
 [[bin]]
 name = "ddg"
 path = "src/bin/main.rs"
 
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = { version = "4.5.40", features = ["derive"], optional = true }
+clap = { version = "4.6.1", features = ["derive"], optional = true }
 tokio = { version = "1.45.1", features = ["full"], optional = true }
-reqwest = { version="0.11.27", features=["cookies", "json"] }
+reqwest = { version = "0.13.2", features = ["cookies", "json", "query"] }
 serde = { version = "1.0.219", features = ["derive"] }
 phf = { version = "0.12.1", features = ["macros"] }
-serde_json = "1.0.140"
+chrono = "0.4.44"
+scraper = "0.26.0"
+anyhow = "1.0.102"
+regex = "1.12.3"
 urlencoding = "2.1.3"
-anyhow = "1.0.98"
-regex = "1.11.1"
-scraper = "0.23.1"
-chrono = "0.4.41"
+serde_json = "1.0.149"
 
 [dev-dependencies]
 tokio = { version = "1.45.1", features = ["full"] }

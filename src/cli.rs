@@ -95,7 +95,7 @@ EXAMPLES:
   - Enable verbose mode:
     ddg --query "rust lang" --verbose
 
-For more information, visit: https://github.com/kevin-rs/duckduckgo
+For more information, visit: https://github.com/wiseaidotdev/duckduckgo
 "#
 )]
 pub struct Cli {
