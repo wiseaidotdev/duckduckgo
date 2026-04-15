@@ -1,38 +1,165 @@
 use crate::colors::AnsiColor;
 use crate::colors::AnsiStyle;
+use crate::params::SearchParams;
 use crate::response::*;
 use crate::topic::Topic;
 use anyhow::{Context, Result};
 use chrono::TimeZone;
 use regex::Regex;
-use reqwest;
 use scraper::{Html, Selector};
 use serde_json::Value;
 
 const BASE_URL: &str = "https://api.duckduckgo.com/";
 
 /// A struct representing a browser for interacting with the DuckDuckGo API.
+///
+/// Use [`Browser::new()`] for a zero-configuration default browser, or
+/// [`Browser::builder()`] to configure user-agent, cookie storage, and proxy
+/// before constructing the instance.
+///
+/// # Example
+/// ```
+/// use duckduckgo::browser::Browser;
+///
+/// // Default browser - the reqwest client is created internally.
+/// let browser = Browser::new();
+/// ```
 pub struct Browser {
     /// The underlying HTTP client used for making requests.
-    pub client: reqwest::Client,
+    client: reqwest::Client,
+}
+
+/// A fluent builder for [`Browser`].
+///
+/// Obtain one via [`Browser::builder()`].
+///
+/// # Example
+/// ```
+/// use duckduckgo::browser::Browser;
+///
+/// let browser = Browser::builder()
+///     .cookie_store(true)
+///     .build()
+///     .expect("Failed to build browser");
+/// ```
+#[derive(Debug, Default)]
+pub struct BrowserBuilder {
+    user_agent: Option<String>,
+    cookie_store: bool,
+    proxy: Option<String>,
+}
+
+impl BrowserBuilder {
+    /// Sets an explicit User-Agent string for all HTTP requests.
+    ///
+    /// # Example
+    /// ```
+    /// use duckduckgo::browser::Browser;
+    ///
+    /// let browser = Browser::builder()
+    ///     .user_agent("Mozilla/5.0")
+    ///     .build()
+    ///     .unwrap();
+    /// ```
+    pub fn user_agent(mut self, agent: impl Into<String>) -> Self {
+        self.user_agent = Some(agent.into());
+        self
+    }
+
+    /// Enables or disables cookie storage for the underlying HTTP client.
+    ///
+    /// # Example
+    /// ```
+    /// use duckduckgo::browser::Browser;
+    ///
+    /// let browser = Browser::builder()
+    ///     .cookie_store(true)
+    ///     .build()
+    ///     .unwrap();
+    /// ```
+    pub fn cookie_store(mut self, enable: bool) -> Self {
+        self.cookie_store = enable;
+        self
+    }
+
+    /// Configures a proxy for all HTTP requests (e.g. `"socks5://127.0.0.1:9050"`).
+    ///
+    /// # Example
+    /// ```
+    /// use duckduckgo::browser::Browser;
+    ///
+    /// let browser = Browser::builder()
+    ///     .proxy("http://localhost:8080")
+    ///     .build()
+    ///     .unwrap();
+    /// ```
+    pub fn proxy(mut self, url: impl Into<String>) -> Self {
+        self.proxy = Some(url.into());
+        self
+    }
+
+    /// Consumes the builder and returns a configured [`Browser`].
+    ///
+    /// # Errors
+    /// Returns an error if the proxy URL is invalid or the underlying
+    /// `reqwest::Client` cannot be constructed.
+    pub fn build(self) -> Result<Browser> {
+        let mut builder = reqwest::Client::builder();
+
+        if let Some(agent) = self.user_agent {
+            builder = builder.user_agent(agent);
+        }
+
+        if self.cookie_store {
+            builder = builder.cookie_store(true);
+        }
+
+        if let Some(proxy_url) = self.proxy {
+            let proxy = reqwest::Proxy::all(&proxy_url)
+                .with_context(|| format!("Invalid proxy URL: {proxy_url}"))?;
+            builder = builder.proxy(proxy);
+        }
+
+        let client = builder
+            .build()
+            .context("Failed to build reqwest HTTP client")?;
+
+        Ok(Browser { client })
+    }
 }
 
 impl Browser {
-    /// Creates a new instance of `Browser` with the specified HTTP client.
+    /// Creates a new `Browser` with a default internal HTTP client.
     ///
-    /// # Arguments
-    /// * `client` - The reqwest HTTP client to be used for making requests.
+    /// If you need to configure a user-agent, cookie storage, or a proxy, use
+    /// [`Browser::builder()`] instead.
     ///
-    /// # Examples
+    /// # Example
     /// ```
     /// use duckduckgo::browser::Browser;
-    /// use reqwest::Client;
     ///
-    /// let client = Client::new();
-    /// let browser = Browser::new(client);
+    /// let browser = Browser::new();
     /// ```
-    pub fn new(client: reqwest::Client) -> Self {
-        Browser { client }
+    pub fn new() -> Self {
+        Browser {
+            client: reqwest::Client::new(),
+        }
+    }
+
+    /// Returns a [`BrowserBuilder`] for configuring an HTTP client before creating
+    /// a `Browser`.
+    ///
+    /// # Example
+    /// ```
+    /// use duckduckgo::browser::Browser;
+    ///
+    /// let browser = Browser::builder()
+    ///     .cookie_store(true)
+    ///     .build()
+    ///     .expect("Failed to build browser");
+    /// ```
+    pub fn builder() -> BrowserBuilder {
+        BrowserBuilder::default()
     }
 
     /// Sends an HTTP request to the given URL using the specified method and query parameters.
@@ -40,6 +167,7 @@ impl Browser {
     /// # Arguments
     /// * `method` - The HTTP method to use (GET, POST, etc.).
     /// * `url` - The target URL.
+    /// * `user_agent` - The User-Agent header value.
     /// * `params` - A slice of key-value string pairs to be included as query parameters.
     ///
     /// # Returns
@@ -53,7 +181,7 @@ impl Browser {
     ///
     /// #[tokio::main]
     /// async fn main() -> anyhow::Result<()> {
-    ///     let browser = Browser::new(reqwest::Client::new());
+    ///     let browser = Browser::new();
     ///     let user_agent = get("firefox").unwrap();
     ///     let response = browser.request(Method::GET, "https://api.duckduckgo.com", user_agent, &[("test", "123")]).await?;
     ///     assert!(response.status().is_success());
@@ -84,6 +212,7 @@ impl Browser {
     ///
     /// # Arguments
     /// * `query` - The search query string.
+    /// * `user_agent` - The User-Agent header value.
     ///
     /// # Returns
     /// A `Result` containing the extracted `vqd` string or an error if not found.
@@ -93,10 +222,9 @@ impl Browser {
     /// use duckduckgo::browser::Browser;
     /// use duckduckgo::user_agents::get;
     ///
-    ///
     /// #[tokio::main]
     /// async fn main() -> anyhow::Result<()> {
-    ///     let browser = Browser::new(reqwest::Client::new());
+    ///     let browser = Browser::new();
     ///     let user_agent = get("firefox").unwrap();
     ///     let vqd = browser.get_vqd("rust programming", user_agent).await?;
     ///     assert!(!vqd.is_empty());
@@ -115,7 +243,7 @@ impl Browser {
 
         let text = resp.text().await?;
 
-        let re = Regex::new(r#"vqd=.?['"]?([\d-]+)['"]?"#)?;
+        let re = Regex::new(r#"vqd=.?['\"]?([\d-]+)['\"]?"#)?;
 
         let vqd = re
             .captures(&text)
@@ -131,19 +259,19 @@ impl Browser {
     /// * `query` - The search query.
     /// * `region` - The region code (e.g., `"wt-wt"` for worldwide).
     /// * `limit` - Optional maximum number of results to return.
+    /// * `user_agent` - The User-Agent header value.
     ///
     /// # Returns
-    /// A list of `LiteSearchResult` items.
+    /// A list of [`LiteSearchResult`] items.
     ///
     /// # Example
     /// ```rust
     /// use duckduckgo::browser::Browser;
     /// use duckduckgo::user_agents::get;
     ///
-    ///
     /// #[tokio::main]
     /// async fn main() -> anyhow::Result<()> {
-    ///     let browser = Browser::new(reqwest::Client::new());
+    ///     let browser = Browser::new();
     ///     let user_agent = get("firefox").unwrap();
     ///     let results = browser.lite_search("rust language", "wt-wt", Some(3), user_agent).await?;
     ///     assert!(results.len() <= 3);
@@ -209,19 +337,19 @@ impl Browser {
     /// * `region` - The region code (e.g., `"wt-wt"`).
     /// * `safesearch` - Whether to enable safe search.
     /// * `limit` - Optional maximum number of image results.
+    /// * `user_agent` - The User-Agent header value.
     ///
     /// # Returns
-    /// A list of `ImageResult` items.
+    /// A list of [`ImageResult`] items.
     ///
     /// # Example
     /// ```rust
     /// use duckduckgo::browser::Browser;
     /// use duckduckgo::user_agents::get;
     ///
-    ///
     /// #[tokio::main]
     /// async fn main() -> anyhow::Result<()> {
-    ///     let browser = Browser::new(reqwest::Client::new());
+    ///     let browser = Browser::new();
     ///     let user_agent = get("firefox").unwrap();
     ///     let images = browser.images("rustacean", "wt-wt", true, Some(5), user_agent).await?;
     ///     assert!(!images.is_empty());
@@ -297,20 +425,20 @@ impl Browser {
     /// * `region` - Region/language code (e.g., `"wt-wt"`).
     /// * `safesearch` - Enables/disables safe search.
     /// * `limit` - Optional limit for number of news results.
+    /// * `user_agent` - The User-Agent header value.
     ///
     /// # Returns
-    /// A list of `NewsResult` entries, including title, source, URL, and date.
+    /// A list of [`NewsResult`] entries, including title, source, URL, and date.
     ///
     /// # Example
     /// ```rust
     /// use duckduckgo::browser::Browser;
     /// use duckduckgo::user_agents::get;
     ///
-    ///
     /// #[tokio::main]
     /// async fn main() -> anyhow::Result<()> {
     ///     let user_agent = get("firefox").unwrap();
-    ///     let browser = Browser::new(reqwest::Client::new());
+    ///     let browser = Browser::new();
     ///     let news = browser.news("AI", "wt-wt", true, Some(5), user_agent).await?;
     ///     assert!(news.iter().any(|n| n.title.contains("AI")));
     ///     Ok(())
@@ -391,27 +519,27 @@ impl Browser {
         Ok(results)
     }
 
-    /// Performs a DuckDuckGo search based on the provided path, result format, and optional result limit.
+    /// Performs a DuckDuckGo search based on the provided path, result format, optional result
+    /// limit, and optional [`SearchParams`].
     ///
     /// # Arguments
     /// * `path` - The path to be appended to the DuckDuckGo API base URL.
     /// * `result_format` - The format in which the search results should be displayed (List or Detailed).
     /// * `limit` - Optional limit for the number of search results to be displayed.
+    /// * `search_params` - Optional additional URL parameters (see [`SearchParams`]).
     ///
     /// # Returns
-    /// `Result<(), reqwest::Error>` - Result indicating success or failure of the search operation.
+    /// `Result<()>` – indicates success or failure.
     ///
     /// # Examples
     /// ```
     /// use duckduckgo::browser::Browser;
     /// use duckduckgo::response::ResultFormat;
-    /// use reqwest::Client;
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = Client::new();
-    ///     let browser = Browser::new(client);
-    ///     browser.browse("?q=Rust", ResultFormat::List, Some(5)).await.unwrap();
+    ///     let browser = Browser::new();
+    ///     browser.browse("?q=Rust", ResultFormat::List, Some(5), None).await.unwrap();
     /// }
     /// ```
     pub async fn browse(
@@ -419,9 +547,19 @@ impl Browser {
         path: &str,
         result_format: ResultFormat,
         limit: Option<usize>,
+        search_params: Option<&SearchParams>,
     ) -> Result<()> {
         let separator = if path.contains('?') { '&' } else { '?' };
-        let url = format!("{}{}{}format=json", BASE_URL, path, separator);
+        let mut url = format!("{}{}{}format=json", BASE_URL, path, separator);
+
+        if let Some(params) = search_params {
+            for (key, value) in params.to_query_pairs() {
+                url.push('&');
+                url.push_str(key);
+                url.push('=');
+                url.push_str(&value);
+            }
+        }
 
         let response = self
             .client
@@ -597,21 +735,20 @@ impl Browser {
     /// * `safe_search` - A boolean indicating whether safe search is enabled.
     /// * `result_format` - The format in which the search results should be displayed (List or Detailed).
     /// * `limit` - Optional limit for the number of search results to be displayed.
+    /// * `search_params` - Optional additional URL parameters (see [`SearchParams`]).
     ///
     /// # Returns
-    /// `Result<(), reqwest::Error>` - Result indicating success or failure of the search operation.
+    /// `Result<()>` – indicates success or failure.
     ///
     /// # Examples
     /// ```
     /// use duckduckgo::browser::Browser;
     /// use duckduckgo::response::ResultFormat;
-    /// use reqwest::Client;
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = Client::new();
-    ///     let browser = Browser::new(client);
-    ///     browser.search("Rust", true, ResultFormat::Detailed, Some(5)).await.unwrap();
+    ///     let browser = Browser::new();
+    ///     browser.search("Rust", true, ResultFormat::Detailed, Some(5), None).await.unwrap();
     /// }
     /// ```
     pub async fn search(
@@ -620,11 +757,12 @@ impl Browser {
         safe_search: bool,
         result_format: ResultFormat,
         limit: Option<usize>,
+        search_params: Option<&SearchParams>,
     ) -> Result<()> {
         let safe_param = if safe_search { "&kp=1" } else { "&kp=-2" };
         let path = format!("?q={}{}", query, safe_param);
 
-        self.browse(&path, result_format, limit)
+        self.browse(&path, result_format, limit, search_params)
             .await
             .with_context(|| format!("Failed to perform search for query '{}'", query))
     }
@@ -633,25 +771,24 @@ impl Browser {
     ///
     /// # Arguments
     /// * `query` - The search query.
-    /// * `params` - Additional search parameters.
+    /// * `params` - Additional search parameters (e.g. region or operator strings).
     /// * `safe_search` - A boolean indicating whether safe search is enabled.
-    /// * `result_format` - The format in which the search results should be displayed (List or Detailed).
+    /// * `result_format` - The format for displaying results (List or Detailed).
     /// * `limit` - Optional limit for the number of search results to be displayed.
+    /// * `search_params` - Optional additional URL parameters (see [`SearchParams`]).
     ///
     /// # Returns
-    /// `Result<(), reqwest::Error>` - Result indicating success or failure of the search operation.
+    /// `Result<()>` – indicates success or failure.
     ///
     /// # Examples
     /// ```
     /// use duckduckgo::browser::Browser;
     /// use duckduckgo::response::ResultFormat;
-    /// use reqwest::Client;
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = Client::new();
-    ///     let browser = Browser::new(client);
-    ///     browser.advanced_search("Rust", "lang:en", true, ResultFormat::Detailed, Some(5)).await.unwrap();
+    ///     let browser = Browser::new();
+    ///     browser.advanced_search("Rust", "lang:en", true, ResultFormat::Detailed, Some(5), None).await.unwrap();
     /// }
     /// ```
     pub async fn advanced_search(
@@ -661,11 +798,12 @@ impl Browser {
         safe_search: bool,
         result_format: ResultFormat,
         limit: Option<usize>,
+        search_params: Option<&SearchParams>,
     ) -> Result<()> {
         let safe_param = if safe_search { "&kp=1" } else { "&kp=-2" };
         let path = format!("?q={}&kl={}{}", query, params, safe_param);
 
-        self.browse(&path, result_format, limit)
+        self.browse(&path, result_format, limit, search_params)
             .await
             .with_context(|| format!("Failed to perform advanced search for query '{}'", query))
     }
@@ -678,21 +816,20 @@ impl Browser {
     /// * `safe_search` - A boolean indicating whether safe search is enabled.
     /// * `result_format` - The format in which the search results should be displayed (List or Detailed).
     /// * `limit` - Optional limit for the number of search results to be displayed.
+    /// * `search_params` - Optional additional URL parameters (see [`SearchParams`]).
     ///
     /// # Returns
-    /// `Result<(), reqwest::Error>` - Result indicating success or failure of the search operation.
+    /// `Result<()>` – indicates success or failure.
     ///
     /// # Examples
     /// ```
     /// use duckduckgo::browser::Browser;
     /// use duckduckgo::response::ResultFormat;
-    /// use reqwest::Client;
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = Client::new();
-    ///     let browser = Browser::new(client);
-    ///     browser.search_operators("Rust", "site:github.com", true, ResultFormat::List, Some(5)).await.unwrap();
+    ///     let browser = Browser::new();
+    ///     browser.search_operators("Rust", "site:github.com", true, ResultFormat::List, Some(5), None).await.unwrap();
     /// }
     /// ```
     pub async fn search_operators(
@@ -702,12 +839,19 @@ impl Browser {
         safe_search: bool,
         result_format: ResultFormat,
         limit: Option<usize>,
+        search_params: Option<&SearchParams>,
     ) -> Result<()> {
         let safe_param = if safe_search { "&kp=1" } else { "&kp=-2" };
         let path = format!("?q={}&{}{}", query, operators, safe_param);
 
-        self.browse(&path, result_format, limit)
+        self.browse(&path, result_format, limit, search_params)
             .await
             .with_context(|| format!("Failed to perform operator search for query '{}'", query))
+    }
+}
+
+impl Default for Browser {
+    fn default() -> Self {
+        Self::new()
     }
 }

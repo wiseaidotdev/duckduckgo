@@ -12,33 +12,33 @@ use {
 
 /// The main entry point of the DuckDuckGo search CLI application.
 ///
-/// It parses command-line arguments using the `clap` crate, configures a `reqwest::Client` based on
-/// the provided command-line options, and performs a DuckDuckGo search using the specified query
+/// Parses command-line arguments using `clap`, builds a [`Browser`] instance via
+/// [`Browser::builder()`], and performs a DuckDuckGo search using the specified query
 /// and optional operators.
 ///
 /// # Arguments
-/// * `--user-agent` - Specify a custom User-Agent for the HTTP requests. Default is the reqwest default User-Agent.
-/// * `--cookie` - Enable cookie storage for HTTP requests.
-/// * `--proxy` - Specify an HTTP proxy for requests. Must be a valid proxy URL.
-/// * `--format` - Enable detailed result format. Default is a list format.
-/// * `--limit` - Specify the limit for the number of search results.
-/// * `--query` - The search query to be used in the DuckDuckGo search.
-/// * `--operators` - Optional search operators to refine the search.
-/// * `--safe` - Enable safe search mode.
-/// * `--backend` - Set backend to use.
+/// * `--user-agent` - Specify a custom User-Agent for HTTP requests. Default: `"firefox"`.
+/// * `--cookie`     - Enable cookie storage for HTTP requests.
+/// * `--proxy`      - Specify an HTTP proxy URL (e.g. `"socks5://192.168.1.1:9000"`).
+/// * `--format`     - Enable detailed result format (default is list format).
+/// * `--limit`      - Limit the number of search results displayed.
+/// * `--query`      - The search query.
+/// * `--operators`  - Optional search operators (e.g. `"site:github.com"`).
+/// * `--safe`       - Enable safe search mode.
+/// * `--backend`    - Backend to use: `Auto`, `Lite`, `Images`, or `News`.
 ///
 /// # Examples
 /// ```
-/// // Run the DuckDuckGo search CLI with a query and display results in list format.
-/// ddg --query "Rust programming"
+/// // Basic search
+/// ddg --query "Rust"
 ///
-/// // Run the DuckDuckGo search CLI with a query and operators, limiting results to 5.
-/// ddg --query "Rust programming" --operators "site:github.com" --limit 5
+/// // Operator search with result limit
+/// ddg --query "Rust" --operators "site:github.com" --limit 5
 /// ```
 ///
 /// # Errors
-/// The function handles errors gracefully and prints out error messages if the DuckDuckGo search
-/// with operators fails, if the query is missing, etc.
+/// The function exits with a non-zero status code when required arguments are missing or
+/// the browser could not be constructed.
 #[cfg(feature = "cli")]
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -48,12 +48,11 @@ async fn main() -> Result<()> {
         color: Some(AnsiColor::Red),
     };
 
-    let mut client_builder = reqwest::Client::builder();
-    let mut usr_agent = "";
+    let mut builder = Browser::builder();
+
     if !args.user_agent.is_empty() {
         if let Some(agent) = get(&args.user_agent[..]) {
-            client_builder = client_builder.user_agent(agent);
-            usr_agent = agent;
+            builder = builder.user_agent(agent);
         } else {
             eprintln!(
                 "{}Error: Invalid user agent selected!{}",
@@ -63,16 +62,18 @@ async fn main() -> Result<()> {
             std::process::exit(1);
         }
     }
+
     if args.cookie {
-        client_builder = client_builder.cookie_store(true);
-    }
-    if !args.proxy.is_empty() {
-        let proxy = reqwest::Proxy::all(&args.proxy)?;
-        client_builder = client_builder.proxy(proxy);
+        builder = builder.cookie_store(true);
     }
 
-    let client = client_builder.build()?;
-    let browser = Browser::new(client);
+    if !args.proxy.is_empty() {
+        builder = builder.proxy(&args.proxy);
+    }
+
+    let browser = builder.build()?;
+
+    let usr_agent: &'static str = get(&args.user_agent[..]).unwrap_or("");
 
     let result_format = if args.format {
         ResultFormat::Detailed
@@ -101,11 +102,12 @@ async fn main() -> Result<()> {
                         args.safe,
                         result_format,
                         limit,
+                        None,
                     )
                     .await?;
             } else {
                 browser
-                    .search(&encode(&args.query), args.safe, result_format, limit)
+                    .search(&encode(&args.query), args.safe, result_format, limit, None)
                     .await?;
             }
         }

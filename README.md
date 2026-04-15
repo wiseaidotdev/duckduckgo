@@ -20,6 +20,8 @@ Search and advanced search in DuckDuckGo
 
 - [Installation](#-installation)
 - [Features](#-features)
+- [Library Usage](#-library-usage)
+- [Search Parameters](#-search-parameters)
 - [Usage](#-usage)
 - [Options](#-options)
 - [Contributing](#-contributing)
@@ -31,6 +33,13 @@ To install `duckduckgo` cli, use the following Cargo command:
 
 ```bash
 cargo install --locked duckduckgo --all-features
+```
+
+To use it as a library, add it to your `Cargo.toml`:
+
+```toml
+[dependencies]
+duckduckgo = "0.2.1"
 ```
 
 ## ✨ Features
@@ -46,8 +55,9 @@ cargo install --locked duckduckgo --all-features
 - 🕵️ **Proxy support**: Route requests through a custom HTTP or SOCKS proxy.
 - 🐛 **Verbose mode**: Print debug information for troubleshooting.
 - 🎨 **ANSI-colored output**: Enjoy beautiful, readable output right in your terminal.
+- 🔧 **Full URL parameter support**: Typed enums for every DuckDuckGo URL setting (region, theme, font, colour, …).
 
-## 🚗 Usage
+## 🚗 CLI Usage
 
 Learn how to use the duckduckgo and explore its features with the following examples:
 
@@ -237,7 +247,7 @@ ddg --query "rust lang" --cookie
 ddg --query "rust lang" --proxy "socks5://192.168.1.1:9000"
 ```
 
-## 🎨 Options
+### 🎨 Options
 
 | Option               | Default Value | Description                                                   |
 | -------------------- | ------------- | ------------------------------------------------------------- |
@@ -249,12 +259,138 @@ ddg --query "rust lang" --proxy "socks5://192.168.1.1:9000"
 | `--user-agent`, `-u` | `firefox`     | Set a custom user agent for HTTP requests.                    |
 | `--cookie`, `-c`     | `true`        | Enable cookie handling for the HTTP client.                   |
 | `--proxy`, `-p`      | `""`          | Set a proxy for requests (e.g., `socks5://192.168.1.1:9000`). |
-| `--backend`, `-b`    | `Auto`        | Choose backend: `Auto`, `HTML`, or `API`.                     |
+| `--backend`, `-b`    | `Auto`        | Choose backend: `Auto`, `Lite`, `Images`, or `News`.          |
 | `--verbose`, `-v`    | `false`       | Enable verbose (debug) mode.                                  |
+
+## 📚 Library Usage
+
+### Simple browser (zero-configuration)
+
+```rust
+use duckduckgo::browser::Browser;
+use duckduckgo::response::ResultFormat;
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let browser = Browser::new();
+    browser.search("rust lang", true, ResultFormat::List, Some(5), None).await?;
+    Ok(())
+}
+```
+
+### Configuring the browser with `BrowserBuilder`
+
+```rust
+use duckduckgo::browser::Browser;
+use duckduckgo::response::ResultFormat;
+use duckduckgo::user_agents::get;
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let user_agent = get("firefox").unwrap();
+
+    let browser = Browser::builder()
+        .user_agent(user_agent)
+        .cookie_store(true)
+        // .proxy("socks5://127.0.0.1:9050")  // optional
+        .build()?;
+
+    browser.search("rust lang", true, ResultFormat::Detailed, Some(5), None).await?;
+    Ok(())
+}
+```
+
+### Image search
+
+```rust
+use duckduckgo::browser::Browser;
+use duckduckgo::user_agents::get;
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let browser = Browser::new();
+    let images = browser.images("ferris crab", "us-en", true, Some(3), get("firefox").unwrap()).await?;
+    for img in images {
+        println!("{}: {}", img.title, img.image);
+    }
+    Ok(())
+}
+```
+
+### News search
+
+```rust
+use duckduckgo::browser::Browser;
+use duckduckgo::user_agents::get;
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let browser = Browser::new();
+    let news = browser.news("Rust programming", "us-en", true, Some(5), get("firefox").unwrap()).await?;
+    for article in news {
+        println!("[{}] {} — {}", article.date, article.title, article.url);
+    }
+    Ok(())
+}
+```
+
+### Lite search
+
+```rust
+use duckduckgo::browser::Browser;
+use duckduckgo::user_agents::get;
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let browser = Browser::new();
+    let results = browser.lite_search("systems programming", "wt-wt", Some(3), get("firefox").unwrap()).await?;
+    for r in results {
+        println!("{}\n{}", r.title, r.url);
+    }
+    Ok(())
+}
+```
+
+## 🔧 Search Parameters
+
+The `params` module provides strongly-typed enums for every documented DuckDuckGo URL parameter. Pass a `SearchParams` instance to `search()`, `advanced_search()`, or `search_operators()`.
+
+```rust
+use duckduckgo::browser::Browser;
+use duckduckgo::response::ResultFormat;
+use duckduckgo::params::{SearchParams, Region, SafeSearch, Theme, Size, Font, Toggle};
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let params = SearchParams::new()
+        .region(Region::UsEn)
+        .safe_search(SafeSearch::Moderate)
+        .theme(Theme::Dark)
+        .size(Size::Large)
+        .link_font(Font::Verdana)
+        .full_urls(Toggle::On)
+        .source("my_app");
+
+    let browser = Browser::new();
+    browser.search("rust lang", false, ResultFormat::List, Some(5), Some(&params)).await?;
+    Ok(())
+}
+```
+
+### Available Parameter Groups
+
+| Group           | Key Methods                                                                                                                                                         |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Result**      | `region(Region)`, `safe_search(SafeSearch)`, `open_instant_answers`, `auto_load_images`, `auto_load_results`, `new_window`, `favicons`, `full_urls`, `auto_suggest` |
+| **Privacy**     | `redirect`, `https`, `address_bar(AddressBar)`, `video_playback(VideoPlayback)`                                                                                     |
+| **Colour**      | `header_color`, `url_color`, `background_color`, `text_color`, `link_color`, `visited_link_color`                                                                   |
+| **Look & Feel** | `theme(Theme)`, `size(Size)`, `width(Width)`, `placement(Placement)`, `link_font(Font)`, `text_font(Font)`, `underline`                                             |
+| **Interface**   | `header_behavior(HeaderBehavior)`, `advertisements`, `page_numbers(PageNumbers)`, `units_measure(UnitsMeasure)`                                                     |
+| **Source**      | `source(impl Into<String>)`                                                                                                                                         |
 
 ## 🤝 Contributing
 
-Contributions and feedback are welcome! If you'd like to contribute, report an issue, or suggest an enhancement, please engage with the project on [GitHub](https://github.com/kevin-rs/duckduckgo).
+Contributions and feedback are welcome! If you'd like to contribute, report an issue, or suggest an enhancement, please engage with the project on [GitHub](https://github.com/wiseaidotdev/duckduckgo).
 Your contributions help improve this CLI for the community.
 
 ## 📄 License

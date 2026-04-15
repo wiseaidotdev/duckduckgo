@@ -1,3 +1,4 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc = include_str!("../README.md")]
 
 pub mod browser;
@@ -5,6 +6,7 @@ pub mod browser;
 pub mod cli;
 pub mod colors;
 pub mod icon;
+pub mod params;
 pub mod response;
 pub mod topic;
 pub mod user_agents;
