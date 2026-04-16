@@ -549,6 +549,22 @@ impl Browser {
         limit: Option<usize>,
         search_params: Option<&SearchParams>,
     ) -> Result<()> {
+        let api_response = self.get_api_response(path, search_params).await?;
+
+        match result_format {
+            ResultFormat::List => self.print_results_list(api_response, limit),
+            ResultFormat::Detailed => self.print_results_detailed(api_response, limit),
+        }
+
+        Ok(())
+    }
+
+    /// Fetches the raw API response from DuckDuckGo for the given path and parameters.
+    pub async fn get_api_response(
+        &self,
+        path: &str,
+        search_params: Option<&SearchParams>,
+    ) -> Result<Response> {
         let separator = if path.contains('?') { '&' } else { '?' };
         let mut url = format!("{}{}{}format=json", BASE_URL, path, separator);
 
@@ -581,12 +597,7 @@ impl Browser {
         let api_response: Response = serde_json::from_str(&text)
             .with_context(|| format!("Failed to parse JSON response: {}", text))?;
 
-        match result_format {
-            ResultFormat::List => self.print_results_list(api_response, limit),
-            ResultFormat::Detailed => self.print_results_detailed(api_response, limit),
-        }
-
-        Ok(())
+        Ok(api_response)
     }
 
     /// Prints search results in list format.
