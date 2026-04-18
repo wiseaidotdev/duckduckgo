@@ -55,7 +55,7 @@ duckduckgo = "0.2.1"
 - 🕵️ **Proxy support**: Route requests through a custom HTTP or SOCKS proxy.
 - 🐛 **Verbose mode**: Print debug information for troubleshooting.
 - 🎨 **ANSI-colored output**: Enjoy beautiful, readable output right in your terminal.
-- 🔧 **Full URL parameter support**: Typed enums for every DuckDuckGo URL setting (region, theme, font, colour, …).
+- 🔧 **Full URL parameter support**: Typed enums for every DuckDuckGo URL setting (region, theme, font, colour, ...).
 
 ## 🚗 CLI Usage
 
@@ -328,7 +328,7 @@ async fn main() -> anyhow::Result<()> {
     let browser = Browser::new();
     let news = browser.news("Rust programming", "us-en", true, Some(5), get("firefox").unwrap()).await?;
     for article in news {
-        println!("[{}] {} — {}", article.date, article.title, article.url);
+        println!("[{}] {} - {}", article.date, article.title, article.url);
     }
     Ok(())
 }
