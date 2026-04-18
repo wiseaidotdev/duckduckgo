@@ -45,7 +45,11 @@ pub struct Browser {
 #[derive(Debug, Default)]
 pub struct BrowserBuilder {
     user_agent: Option<String>,
+    #[cfg(not(target_arch = "wasm32"))]
+    #[allow(dead_code)]
     cookie_store: bool,
+    #[cfg(not(target_arch = "wasm32"))]
+    #[allow(dead_code)]
     proxy: Option<String>,
 }
 
@@ -77,6 +81,7 @@ impl BrowserBuilder {
     ///     .build()
     ///     .unwrap();
     /// ```
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn cookie_store(mut self, enable: bool) -> Self {
         self.cookie_store = enable;
         self
@@ -93,6 +98,7 @@ impl BrowserBuilder {
     ///     .build()
     ///     .unwrap();
     /// ```
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn proxy(mut self, url: impl Into<String>) -> Self {
         self.proxy = Some(url.into());
         self
@@ -110,10 +116,12 @@ impl BrowserBuilder {
             builder = builder.user_agent(agent);
         }
 
+        #[cfg(not(target_arch = "wasm32"))]
         if self.cookie_store {
             builder = builder.cookie_store(true);
         }
 
+        #[cfg(not(target_arch = "wasm32"))]
         if let Some(proxy_url) = self.proxy {
             let proxy = reqwest::Proxy::all(&proxy_url)
                 .with_context(|| format!("Invalid proxy URL: {proxy_url}"))?;
