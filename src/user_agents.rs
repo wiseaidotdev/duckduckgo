@@ -1,3 +1,10 @@
+// Copyright 2026 Mahmoud Harmouch.
+//
+// Licensed under the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
 use phf::phf_map;
 
 // Crawled from: https://www.useragentstring.com/pages/Browserlist/
@@ -9604,3 +9611,10 @@ pub static USER_AGENTS: phf::Map<&'static str, &'static str> = phf_map! {
 pub fn get(name: &str) -> Option<&'static str> {
     USER_AGENTS.get(name).copied()
 }
+
+// Copyright 2026 Mahmoud Harmouch.
+//
+// Licensed under the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.

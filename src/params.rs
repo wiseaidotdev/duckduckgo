@@ -1,3 +1,60 @@
+// Copyright 2026 Mahmoud Harmouch.
+//
+// Licensed under the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
+//! # Search Parameters
+//!
+//! This module provides the [`SearchParams`] builder and all the typed enums
+//! that map to DuckDuckGo URL query parameters (`kl`, `kp`, `kae`, etc.).
+//!
+//! ## Parameter Reference
+//!
+//! The table below lists every parameter supported by [`SearchParams`] and
+//! the [`SearchParams`] setter that controls it.
+//!
+//! | DDG Param | Type | Setter |
+//! |-----------|------|--------|
+//! | `kl` | [`Region`] | [`SearchParams::region`] |
+//! | `kp` | [`SafeSearch`] | [`SearchParams::safe_search`] |
+//! | `kz` | [`Toggle`] | [`SearchParams::open_instant_answers`] |
+//! | `kc` | [`Toggle`] | [`SearchParams::auto_load_images`] |
+//! | `kav` | [`Toggle`] | [`SearchParams::auto_load_results`] |
+//! | `kn` | [`Toggle`] | [`SearchParams::new_window`] |
+//! | `kf` | [`Favicons`] | [`SearchParams::favicons`] |
+//! | `kaf` | [`Toggle`] | [`SearchParams::full_urls`] |
+//! | `kac` | [`Toggle`] | [`SearchParams::auto_suggest`] |
+//! | `kd` | [`Toggle`] | [`SearchParams::redirect`] |
+//! | `kh` | [`Toggle`] | [`SearchParams::https`] |
+//! | `kg` | [`AddressBar`] | [`SearchParams::address_bar`] |
+//! | `k5` | [`VideoPlayback`] | [`SearchParams::video_playback`] |
+//! | `kj` | `String` | [`SearchParams::header_color`] |
+//! | `kx` | `String` | [`SearchParams::url_color`] |
+//! | `k7` | `String` | [`SearchParams::background_color`] |
+//! | `k8` | `String` | [`SearchParams::text_color`] |
+//! | `k9` | `String` | [`SearchParams::link_color`] |
+//! | `kaa` | `String` | [`SearchParams::visited_link_color`] |
+//! | `kae` | [`Theme`] | [`SearchParams::theme`] |
+//! | `ks` | [`Size`] | [`SearchParams::size`] |
+//! | `kw` | [`Width`] | [`SearchParams::width`] |
+//! | `km` | [`Placement`] | [`SearchParams::placement`] |
+//! | `ka` | [`Font`] | [`SearchParams::link_font`] |
+//! | `ku` | [`Toggle`] | [`SearchParams::underline`] |
+//! | `kt` | [`Font`] | [`SearchParams::text_font`] |
+//! | `ko` | [`HeaderBehavior`] | [`SearchParams::header_behavior`] |
+//! | `k1` | [`Toggle`] | [`SearchParams::advertisements`] |
+//! | `kv` | [`PageNumbers`] | [`SearchParams::page_numbers`] |
+//! | `kaj` | [`UnitsMeasure`] | [`SearchParams::units_measure`] |
+//! | `t` | `String` | [`SearchParams::source`] |
+//!
+//! ## See Also
+//!
+//! - [DuckDuckGo URL Parameters](https://duckduckgo.com/duckduckgo-help-pages/settings/params/)
+//! - [DuckDuckGo Settings UI](https://duckduckgo.com/settings)
+//! - [DuckDuckGo Help - Search Syntax](https://help.duckduckgo.com/duckduckgo-help-pages/results/syntax/)
+
 /// The region / language setting for DuckDuckGo searches (`kl` parameter).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Region {
@@ -918,3 +975,10 @@ impl SearchParams {
         pairs
     }
 }
+
+// Copyright 2026 Mahmoud Harmouch.
+//
+// Licensed under the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.

@@ -1,0 +1,36 @@
+[build-system]
+requires = ["maturin>=1.13"]
+build-backend = "maturin"
+
+[project]
+name = "ddg-rs"
+requires-python = ">=3.12"
+description = "A fast, privacy-respecting Python library for DuckDuckGo searches, powered by Rust."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Mahmoud Harmouch", email = "oss@wiseai.dev" }]
+keywords = ["duckduckgo", "search", "ddg", "privacy", "rust"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Intended Audience :: Developers",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/wiseaidotdev/duckduckgo"
+Repository = "https://github.com/wiseaidotdev/duckduckgo"
+Documentation = "https://docs.rs/duckduckgo"
+Issues = "https://github.com/wiseaidotdev/duckduckgo/issues"
+
+[tool.maturin]
+features = ["python"]
+module-name = "ddg._ddg"
+python-source = "python"
+
+[project.scripts]
+ddg = "ddg.__main__:main"
