@@ -2,8 +2,9 @@ name: Debian/RPM Packaging Release
 
 on:
   push:
-    tags:
-      - "v*"
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
 
 jobs:
   build-debian:
@@ -11,15 +12,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential debhelper dh-cargo devscripts pkg-config libssl-dev
 
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
       - name: Build Debian package
         run: |
-          debuild -us -uc -b
+          debuild --preserve-envvar PATH -us -uc -b
           mkdir -p dist
           mv ../*.deb ./dist/
 
@@ -34,30 +39,40 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y rpm cargo rustc pkg-config libssl-dev
+          sudo apt-get install -y rpm pkg-config libssl-dev
+          sudo apt-get install -y rpm
 
-      - name: Install rpmdevtools
-        run: sudo apt-get install -y rpm
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
 
       - name: Prepare RPM build environment
         run: |
           mkdir -p ~/rpmbuild/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
           cp rpm/ddg-rs.spec ~/rpmbuild/SPECS/
           
-          # Extract version from GitHub ref
-          VERSION=${GITHUB_REF#refs/tags/v}
-          sed -i "s/Version:.*$/Version: $VERSION/" ~/rpmbuild/SPECS/ddg-rs.spec
+          if [[ $GITHUB_REF == refs/tags/v* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/v}
+          else
+            VERSION=$(grep -m 1 "^version =" Cargo.toml | sed 's/.*"\(.*\)".*/\1/')-${GITHUB_SHA::8}
+          fi
           
-          # Archive sources
-          tar -czvf ~/rpmbuild/SOURCES/ddg-rs-${VERSION}.tar.gz .
+          VERSION_CLEAN=$(echo "$VERSION" | sed 's|/|-|g' | tr -d '\n\r')
+          VERSION_ONLY=$(echo "${VERSION_CLEAN%%-*}" | tr -d '\n\r')
+          
+          sed -i "s@Version:.*\$@Version: $VERSION_ONLY@" ~/rpmbuild/SPECS/ddg-rs.spec
+          
+          tar -czvf ~/rpmbuild/SOURCES/ddg-rs-${VERSION_ONLY}.tar.gz --transform "s,^\.,ddg-rs-${VERSION_ONLY}," --exclude=.git .
+          
+          echo "VERSION_ONLY=$VERSION_ONLY" >> $GITHUB_ENV
 
       - name: Build RPM package
         run: |
-          rpmbuild -bb ~/rpmbuild/SPECS/ddg-rs.spec
+          rpmbuild -bb --nodeps ~/rpmbuild/SPECS/ddg-rs.spec
           mkdir -p dist
           mv ~/rpmbuild/RPMS/*/*.rpm ./dist/
 

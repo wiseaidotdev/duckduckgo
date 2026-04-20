@@ -1,12 +1,12 @@
 %global debug_package %{nil}
 
-Name:    duckduckgo
+Name:    ddg-rs
 Version: 0.3.0
 Release: 1%{?dist}
 Summary: A CLI, TUI, and SDK for instant DuckDuckGo searches
 License: MIT
-URL:     https://github.com/wiseaidotdev/%{name}
-Source0: %{url}/archive/refs/tags/v%{version}.tar.gz
+URL:     https://github.com/wiseaidotdev/duckduckgo
+Source0: ddg-rs-%{version}.tar.gz
 
 BuildRequires: cargo
 BuildRequires: rust
@@ -15,16 +15,16 @@ BuildRequires: openssl-devel
 Requires: openssl
 
 %description
-Duckduckgo is a multi-language toolkit for searching DuckDuckGo from
+ddg-rs is a multi-language toolkit for searching DuckDuckGo from
 code or the command line. The core is written entirely in Rust and
 compiled to a native extension. Features include Instant Answer, Lite, Images,
 and News backends, along with a standalone CLI and TUI.
 
 %prep
-%autosetup -n %{name}-%{version}
+%autosetup -n ddg-rs-%{version}
 
 %build
-export RUSTFLAGS="%{build_rustflags} -C strip=symbols"
+export RUSTFLAGS="-C strip=symbols"
 cargo build --release --features=rust-binary
 
 %install
@@ -37,5 +37,5 @@ install -Dpm 0644 README.md -t %{buildroot}%{_docdir}/%{name}/
 %{_bindir}/ddg
 
 %changelog
-* Mon Apr 20 2026 Mahmoud Harmouch <oss@wiseai.dev> - 0.3.0-1
+* Mon Apr 20 2026 Mahmoud Harmouch <oss@wiseai.dev> - 0.3.1-1
 - Initial release
