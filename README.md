@@ -12,6 +12,13 @@
 
 > `duckduckgo` is a multi-language toolkit for searching DuckDuckGo from code or the command line. The core is written entirely in Rust and compiled to a native extension, so Python and Node.js callers enjoy the same performance and correctness guarantees as the Rust library, with no runtime dependencies beyond the native extension itself 🗿.
 
+| 🐧 Linux `(Recommended)` | 🪟 Windows |
+| :------: | :--------: |
+| ![ddg-tui-linux](https://github.com/wiseaidotdev/duckduckgo/assets/linux.png) | ![ddg-tui-windows](https://github.com/wiseaidotdev/duckduckgo/assets/windows.PNG) |
+| [Download `ddg` binary](https://github.com/wiseaidotdev/duckduckgo/releases/latest/download/ddg) | [Download `ddg.exe` binary](https://github.com/wiseaidotdev/duckduckgo/releases/latest/download/ddg.exe) |
+| `cargo install duckduckgo --features rust-binary` | `cargo install duckduckgo --features rust-binary` |
+| `ddg` ← launches TUI | `ddg` ← launches TUI |
+
 </div>
 
 ## 🤔 What does this crate provide?

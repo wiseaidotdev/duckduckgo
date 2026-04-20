@@ -25,6 +25,9 @@ pub mod user_agents;
 #[cfg(feature = "cli")]
 pub mod app;
 
+#[cfg(feature = "tui")]
+pub mod tui;
+
 #[cfg(all(feature = "python", not(feature = "rust-binary")))]
 pub mod python;
 
