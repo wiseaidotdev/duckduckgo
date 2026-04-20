@@ -19,7 +19,7 @@ The `debian/` directory handles building `.deb` packages using standard `debhelp
    ```
 1. Install the generated package:
    ```sh
-   sudo dpkg -i ../ddg-rs_0.3.0-1_amd64.deb
+   sudo dpkg -i ../ddg-rs_0.3.1-1_amd64.deb
    ```
 
 ## RedHat/Fedora (.rpm)
@@ -39,13 +39,13 @@ The `rpm/` directory manages `.rpm` package configurations through the `ddg-rs.s
    ```
 1. Archive the module and place it into the `SOURCES` directory:
    ```sh
-   tar -czvf ~/rpmbuild/SOURCES/ddg-rs-0.3.0.tar.gz .
+   tar -czvf ~/rpmbuild/SOURCES/ddg-rs-0.3.1.tar.gz .
    ```
 1. Build the RPM:
    ```sh
-   rpmbuild -bb ~/rpmbuild/SPECS/ddg-rs.spec
+   rpmbuild -bb --nodeps rpm/ddg-rs.spec
    ```
 1. Install the built RPM:
    ```sh
-   sudo dnf install ~/rpmbuild/RPMS/x86_64/ddg-rs-0.3.0-1.x86_64.rpm
+   sudo dnf install ~/rpmbuild/RPMS/x86_64/ddg-rs-0.3.1-1.x86_64.rpm
    ```
