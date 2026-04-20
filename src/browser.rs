@@ -1,3 +1,49 @@
+// Copyright 2026 Mahmoud Harmouch.
+//
+// Licensed under the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
+//! # Browser
+//!
+//! This module provides the [`Browser`] struct and its associated
+//! [`BrowserBuilder`], which are the primary entry points for executing
+//! DuckDuckGo searches programmatically.
+//!
+//! ## Search Methods Overview
+//!
+//! | Method | Backend | Description |
+//! |--------|---------|-------------|
+//! [`Browser::lite_search`] | DuckDuckGo Lite | HTML-only text results |
+//! [`Browser::images`] | `duckduckgo.com/i.js` | Paginated image results |
+//! [`Browser::news`] | `duckduckgo.com/news.js` | Paginated news articles |
+//! [`Browser::browse`] | `api.duckduckgo.com` | Instant Answer API (colourised) |
+//! [`Browser::search`] | `api.duckduckgo.com` | Convenience wrapper around browse |
+//! [`Browser::get_api_response`] | `api.duckduckgo.com` | Raw structured API response |
+//!
+//! ## Configuration
+//!
+//! Use [`Browser::builder()`] to configure a custom User-Agent, enable
+//! cookie storage, or route requests through a proxy before constructing
+//! the instance. The zero-argument [`Browser::new()`] covers most use cases.
+//!
+//! ## Token Acquisition
+//!
+//! The image and news endpoints require a `vqd` token, which is automatically
+//! fetched by [`Browser::get_vqd`] before each paginated request.
+//!
+//! ## See Also
+//!
+//! - [DuckDuckGo Instant Answer API](https://duckduckgo.com/duckduckgo-help-pages/open-source/instant-answer-interface/)
+//! - [DuckDuckGo Lite](https://lite.duckduckgo.com/lite/)
+//! - [DuckDuckGo URL Parameters](https://duckduckgo.com/duckduckgo-help-pages/settings/params/)
+//! - [DuckDuckGo Help Pages](https://duckduckgo.com/duckduckgo-help-pages/)
+
+#![cfg_attr(docsrs, feature(doc_cfg))]
+#![doc = include_str!("../WASM.md")]
+#![doc = include_str!("../RUST.md")]
+
 use crate::colors::AnsiColor;
 use crate::colors::AnsiStyle;
 use crate::params::SearchParams;
@@ -537,7 +583,7 @@ impl Browser {
     /// * `search_params` - Optional additional URL parameters (see [`SearchParams`]).
     ///
     /// # Returns
-    /// `Result<()>` – indicates success or failure.
+    /// `Result<()>` - indicates success or failure.
     ///
     /// # Examples
     /// ```
@@ -757,7 +803,7 @@ impl Browser {
     /// * `search_params` - Optional additional URL parameters (see [`SearchParams`]).
     ///
     /// # Returns
-    /// `Result<()>` – indicates success or failure.
+    /// `Result<()>` - indicates success or failure.
     ///
     /// # Examples
     /// ```
@@ -797,7 +843,7 @@ impl Browser {
     /// * `search_params` - Optional additional URL parameters (see [`SearchParams`]).
     ///
     /// # Returns
-    /// `Result<()>` – indicates success or failure.
+    /// `Result<()>` - indicates success or failure.
     ///
     /// # Examples
     /// ```
@@ -838,7 +884,7 @@ impl Browser {
     /// * `search_params` - Optional additional URL parameters (see [`SearchParams`]).
     ///
     /// # Returns
-    /// `Result<()>` – indicates success or failure.
+    /// `Result<()>` - indicates success or failure.
     ///
     /// # Examples
     /// ```
@@ -874,3 +920,10 @@ impl Default for Browser {
         Self::new()
     }
 }
+
+// Copyright 2026 Mahmoud Harmouch.
+//
+// Licensed under the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.

@@ -1,0 +1,55 @@
+{
+  "name": "ddg-rs",
+  "version": "0.2.3",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "bin": {
+    "ddg": "bin/ddg.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wiseaidotdev/duckduckgo.git"
+  },
+  "homepage": "https://github.com/wiseaidotdev/duckduckgo",
+  "bugs": {
+    "url": "https://github.com/wiseaidotdev/duckduckgo/issues"
+  },
+  "author": "Mahmoud Harmouch <oss@wiseai.dev>",
+  "license": "MIT",
+  "description": "A fast, privacy-respecting Node.js library for DuckDuckGo searches, powered by Rust.",
+  "keywords": [
+    "duckduckgo",
+    "search",
+    "ddg",
+    "privacy",
+    "rust",
+    "napi"
+  ],
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "bin/",
+    "*.node",
+    "README.md",
+    "LICENSE"
+  ],
+  "napi": {
+    "binaryName": "ddg",
+    "triples": {
+      "defaults": true
+    }
+  },
+  "scripts": {
+    "artifacts": "napi artifacts",
+    "build": "napi build --platform --release --features node",
+    "build:debug": "napi build --platform --features node",
+    "prepublishOnly": "napi prepublish -t npm",
+    "version": "napi version"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^2.18.4"
+  },
+  "engines": {
+    "node": ">= 18"
+  }
+}

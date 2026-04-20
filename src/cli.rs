@@ -1,3 +1,10 @@
+// Copyright 2026 Mahmoud Harmouch.
+//
+// Licensed under the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
 use clap::Parser;
 use clap::ValueEnum;
 use clap::builder::styling::{AnsiColor, Effects, Styles};
@@ -138,3 +145,10 @@ pub struct Cli {
     #[arg(short = 'b', long = "backend", value_enum, default_value_t = Backend::Auto)]
     pub backend: Backend,
 }
+
+// Copyright 2026 Mahmoud Harmouch.
+//
+// Licensed under the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.

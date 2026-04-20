@@ -80,7 +80,7 @@ fn test_response_abstract_fields() {
         "Abstract": "Short abstract.",
         "AbstractSource": "Wikipedia",
         "AbstractText": "Detailed abstract text.",
-        "AbstractURL": "https://en.wikipedia.org/wiki/Rust",
+        "AbstractURL": "https://en.wikipedia.org/wiki/Rust_(programming_language)",
         "Answer": "",
         "AnswerType": "",
         "Definition": "",
@@ -109,7 +109,7 @@ fn test_response_abstract_fields() {
     );
     assert_eq!(
         response.abstract_url.as_deref(),
-        Some("https://en.wikipedia.org/wiki/Rust")
+        Some("https://en.wikipedia.org/wiki/Rust_(programming_language)")
     );
     assert_eq!(response.entity.as_deref(), Some("programming language"));
     assert_eq!(response.image.as_deref(), Some("/i/rust.png"));
@@ -127,7 +127,7 @@ fn test_response_answer_fields() {
         "AnswerType": "calc",
         "Definition": "A number.",
         "DefinitionSource": "Math",
-        "DefinitionURL": "https://example.com/42",
+        "DefinitionURL": "https://en.wikipedia.org/wiki/Rust_(programming_language)",
         "Entity": "",
         "Heading": "",
         "Image": "",
@@ -149,7 +149,7 @@ fn test_response_answer_fields() {
     assert_eq!(response.definition_source.as_deref(), Some("Math"));
     assert_eq!(
         response.definition_url.as_deref(),
-        Some("https://example.com/42")
+        Some("https://en.wikipedia.org/wiki/Rust_(programming_language)")
     );
 }
 

@@ -1,3 +1,42 @@
+// Copyright 2026 Mahmoud Harmouch.
+//
+// Licensed under the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
+//! # API Response Types
+//!
+//! This module contains the deserialization types for every response format
+//! supported by the DuckDuckGo search backends.
+//!
+//! ## Response Types
+//!
+//! | Type | Backend | Description |
+//! |------|---------|-------------|
+//! | [`Response`] | Instant Answer API | Full structured API response |
+//! | [`LiteSearchResult`] | DuckDuckGo Lite | Single HTML text result |
+//! | [`ImageResult`] | Images API | Single image result |
+//! | [`NewsResult`] | News API | Single news article |
+//!
+//! ## Instant Answer API Response Structure
+//!
+//! The [`Response`] struct maps directly to the JSON returned by
+//! `api.duckduckgo.com`. Key fields include:
+//!
+//! - [`Response::heading`] - topic or entity heading.
+//! - [`Response::abstract_text`] - Wikipedia-style article summary.
+//! - [`Response::answer`] - direct answer, e.g. for calculations.
+//! - [`Response::related_topics`] - list of [`crate::topic::Topic`] entries.
+//! - [`Response::meta`] - [`Meta`] struct describing the Instant Answer plugin.
+//!
+//! ## See Also
+//!
+//! - [DuckDuckGo Instant Answer API](https://duckduckgo.com/duckduckgo-help-pages/open-source/instant-answer-interface/)
+//! - [Instant Answer API Playground](https://api.duckduckgo.com/?q=rust&format=json&pretty=1)
+//! - [DuckDuckGo Open Source Instant Answers](https://duck.co/ia)
+//! - [DuckDuckGo Help Pages](https://duckduckgo.com/duckduckgo-help-pages/)
+
 use crate::topic::Topic;
 use serde::Deserialize;
 use serde_json::Value;
@@ -258,3 +297,10 @@ pub struct LiteSearchResult {
     /// A short snippet or preview text from the search result.
     pub snippet: String,
 }
+
+// Copyright 2026 Mahmoud Harmouch.
+//
+// Licensed under the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.

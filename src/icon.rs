@@ -31,12 +31,19 @@ impl Icon {
     /// use duckduckgo::icon::Icon;
     ///
     /// let icon = Icon {
-    ///     height: Value::Number(10.into()),
-    ///     url: String::from("https://example.com/icon.png"),
-    ///     width: Value::Number(20.into()),
+    ///     height: Value::Number(400.into()),
+    ///     url: String::from("https://placehold.co/600x400"),
+    ///     width: Value::Number(600.into()),
     /// };
     /// ```
     pub fn new(height: Value, url: String, width: Value) -> Self {
         Icon { height, url, width }
     }
 }
+
+// Copyright 2026 Mahmoud Harmouch.
+//
+// Licensed under the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
