@@ -12,10 +12,15 @@
 //! the CLI to be driven both from the standalone binary and from language
 //! binding `run_cli` helpers without duplicating code.
 //!
+//! When invoked with no `--query` argument, the function launches the full-screen
+//! TUI built with `ratatui` (requires the `tui` Cargo feature which is implied
+//! by `rust-binary`).
+//!
 //! # See Also
 //!
 //! - [`crate::cli`] - argument definitions parsed by this function.
 //! - [`crate::browser`] - HTTP client that executes the actual searches.
+//! - [`crate::tui`] - interactive TUI launched when no query is supplied.
 
 use anyhow::Result;
 use clap::Parser;
@@ -29,9 +34,9 @@ use urlencoding::encode;
 
 /// Drives the `ddg` CLI from an arbitrary argument list.
 ///
-/// This function is the single point of truth for CLI behaviour. Both the
-/// standalone binary (`src/bin/main.rs`) and the Python / Node.js `run_cli`
-/// helpers delegate to this function, keeping the implementation DRY.
+/// When `--query` / `-q` is omitted, the function checks for the `tui` feature
+/// and launches the fullscreen interactive TUI. When a query is present, the
+/// corresponding DuckDuckGo backend is called and results are printed to stdout.
 ///
 /// # Arguments
 ///
@@ -49,6 +54,23 @@ pub async fn run_cli_entry(args: Vec<String>) -> Result<()> {
         bold: true,
         color: Some(AnsiColor::Red),
     };
+
+    if args.query.is_none() {
+        #[cfg(feature = "tui")]
+        return crate::tui::run_tui().await;
+
+        #[cfg(not(feature = "tui"))]
+        {
+            eprintln!(
+                "{}Error: --query (-q) is required when the TUI feature is disabled.{}",
+                error_style.escape_code(),
+                AnsiStyle::reset_code()
+            );
+            std::process::exit(1);
+        }
+    }
+
+    let query = args.query.unwrap();
 
     let mut builder = Browser::builder();
 
@@ -85,21 +107,12 @@ pub async fn run_cli_entry(args: Vec<String>) -> Result<()> {
 
     let limit = Some(args.limit);
 
-    if args.query.is_empty() {
-        eprintln!(
-            "{}Error: Query is required!{}",
-            error_style.escape_code(),
-            AnsiStyle::reset_code()
-        );
-        std::process::exit(1);
-    }
-
     match args.backend {
         Backend::Auto => {
             if !args.operators.is_empty() {
                 browser
                     .search_operators(
-                        &encode(&args.query),
+                        &encode(&query),
                         &encode(&args.operators),
                         args.safe,
                         result_format,
@@ -109,13 +122,13 @@ pub async fn run_cli_entry(args: Vec<String>) -> Result<()> {
                     .await?;
             } else {
                 browser
-                    .search(&encode(&args.query), args.safe, result_format, limit, None)
+                    .search(&encode(&query), args.safe, result_format, limit, None)
                     .await?;
             }
         }
         Backend::Lite => {
             let results = browser
-                .lite_search(&args.query, "wt-wt", limit, usr_agent)
+                .lite_search(&query, "wt-wt", limit, usr_agent)
                 .await?;
             for r in results {
                 println!("{}\n{}\n{}", r.title, r.url, r.snippet);
@@ -123,7 +136,7 @@ pub async fn run_cli_entry(args: Vec<String>) -> Result<()> {
         }
         Backend::Images => {
             let results = browser
-                .images(&args.query, "wt-wt", args.safe, limit, usr_agent)
+                .images(&query, "wt-wt", args.safe, limit, usr_agent)
                 .await?;
             for r in results {
                 println!("{}\n{}\n{}", r.title, r.url, r.image);
@@ -131,7 +144,7 @@ pub async fn run_cli_entry(args: Vec<String>) -> Result<()> {
         }
         Backend::News => {
             let results = browser
-                .news(&args.query, "wt-wt", args.safe, limit, usr_agent)
+                .news(&query, "wt-wt", args.safe, limit, usr_agent)
                 .await?;
             for r in results {
                 println!("{}\n{}\n{}", r.date, r.title, r.url);
@@ -141,10 +154,3 @@ pub async fn run_cli_entry(args: Vec<String>) -> Result<()> {
 
     Ok(())
 }
-
-// Copyright 2026 Mahmoud Harmouch.
-//
-// Licensed under the MIT license
-// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
-// option. This file may not be copied, modified, or distributed
-// except according to those terms.

@@ -111,7 +111,7 @@ pub struct Cli {
 
     /// Sets the search query.
     #[arg(short = 'q', long = "query")]
-    pub query: String,
+    pub query: Option<String>,
 
     /// Sets the search operators.
     #[arg(short = 'o', long = "operators", default_value_t = String::from(""))]
