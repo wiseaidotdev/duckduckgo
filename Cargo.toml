@@ -1,6 +1,6 @@
 [package]
 name = "duckduckgo"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Mahmoud Harmouch <oss@wiseai.dev>"]
 edition = "2024"
 description = "🦆 A CLI, TUI, and SDK for instant DuckDuckGo searches."

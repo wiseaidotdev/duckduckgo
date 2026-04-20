@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 
 Name:    duckduckgo
-Version: 0.3.0
+Version: 0.3.1
 Release: 1%{?dist}
 Summary: A CLI, TUI, and SDK for instant DuckDuckGo searches
 License: MIT
@@ -37,5 +37,5 @@ install -Dpm 0644 README.md -t %{buildroot}%{_docdir}/%{name}/
 %{_bindir}/ddg
 
 %changelog
-* Mon Apr 20 2026 Mahmoud Harmouch <oss@wiseai.dev> - 0.3.0-1
+* Mon Apr 20 2026 Mahmoud Harmouch <oss@wiseai.dev> - 0.3.1-1
 - Initial release
