@@ -1,0 +1,99 @@
+name: Debian/RPM Packaging Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-debian:
+    name: Build Debian Package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential debhelper dh-cargo devscripts pkg-config libssl-dev
+
+      - name: Build Debian package
+        run: |
+          debuild -us -uc -b
+          mkdir -p dist
+          mv ../*.deb ./dist/
+
+      - name: Upload Debian package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: debian-package
+          path: dist/*.deb
+
+  build-rpm:
+    name: Build RPM Package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm cargo rustc pkg-config libssl-dev
+
+      - name: Install rpmdevtools
+        run: sudo apt-get install -y rpm
+
+      - name: Prepare RPM build environment
+        run: |
+          mkdir -p ~/rpmbuild/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
+          cp rpm/ddg-rs.spec ~/rpmbuild/SPECS/
+          
+          # Extract version from GitHub ref
+          VERSION=${GITHUB_REF#refs/tags/v}
+          sed -i "s/Version:.*$/Version: $VERSION/" ~/rpmbuild/SPECS/ddg-rs.spec
+          
+          # Archive sources
+          tar -czvf ~/rpmbuild/SOURCES/ddg-rs-${VERSION}.tar.gz .
+
+      - name: Build RPM package
+        run: |
+          rpmbuild -bb ~/rpmbuild/SPECS/ddg-rs.spec
+          mkdir -p dist
+          mv ~/rpmbuild/RPMS/*/*.rpm ./dist/
+
+      - name: Upload RPM package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpm-package
+          path: dist/*.rpm
+
+  release:
+    name: Publish Linux Packages Release
+    needs: [build-debian, build-rpm]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: packages
+
+      - name: Flatten packages directory
+        run: |
+          mkdir dist
+          find packages -name '*.deb' -exec cp {} dist/ \;
+          find packages -name '*.rpm' -exec cp {} dist/ \;
+
+      - name: Extract metadata
+        id: meta
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: |
+            dist/*.deb
+            dist/*.rpm
+          fail_on_unmatched_files: false
