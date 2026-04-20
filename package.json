@@ -1,6 +1,6 @@
 {
   "name": "ddg-rs",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "main": "index.js",
   "types": "index.d.ts",
   "bin": {
@@ -47,9 +47,9 @@
     "version": "napi version"
   },
   "devDependencies": {
-    "@napi-rs/cli": "^2.18.4"
+    "@napi-rs/cli": "^3.6.2"
   },
   "engines": {
-    "node": ">= 18"
+    "node": ">= 22"
   }
 }
