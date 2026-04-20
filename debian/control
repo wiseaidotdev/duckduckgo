@@ -1,0 +1,28 @@
+Source: ddg-rs
+Section: net
+Priority: optional
+Maintainer: Mahmoud Harmouch <oss@wiseai.dev>
+Build-Depends: debhelper-compat (= 13),
+               cargo,
+               rustc,
+               pkg-config,
+               libssl-dev
+Standards-Version: 4.7.2
+Homepage: https://github.com/wiseaidotdev/duckduckgo
+Vcs-Git: https://github.com/wiseaidotdev/duckduckgo.git
+Vcs-Browser: https://github.com/wiseaidotdev/duckduckgo
+Rules-Requires-Root: no
+
+Package: ddg-rs
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends}
+Description: A CLI, TUI, and SDK for instant DuckDuckGo searches
+ Duckduckgo is a multi-language toolkit for searching DuckDuckGo from
+ code or the command line. The core is written entirely in Rust and
+ compiled to a native extension.
+ .
+ Features include:
+  * Instant Answer, Lite, Images, and News backends
+  * Comprehensive SearchParams builder
+  * Standalone CLI and TUI

@@ -12,12 +12,12 @@
 
 > `duckduckgo` is a multi-language toolkit for searching DuckDuckGo from code or the command line. The core is written entirely in Rust and compiled to a native extension, so Python and Node.js callers enjoy the same performance and correctness guarantees as the Rust library, with no runtime dependencies beyond the native extension itself 🗿.
 
-| 🐧 Linux `(Recommended)` | 🪟 Windows |
-| :------: | :--------: |
-| ![ddg-tui-linux](https://github.com/wiseaidotdev/duckduckgo/blob/main/assets/linux.png) | ![ddg-tui-windows](https://github.com/wiseaidotdev/duckduckgo/blob/main/assets/windows.PNG) |
-| [Download `ddg` binary](https://github.com/wiseaidotdev/duckduckgo/releases/latest/download/ddg) | [Download `ddg.exe` binary](https://github.com/wiseaidotdev/duckduckgo/releases/latest/download/ddg.exe) |
-| `cargo install duckduckgo --features rust-binary` | `cargo install duckduckgo --features rust-binary` |
-| `ddg` ← launches TUI | `ddg` ← launches TUI |
+| 🐧 Linux `(Recommended)` | 🪟 Windows | 🐳 Docker | 📦 Linux Distros |
+| :------: | :--------: | :--------: | :--------: |
+| ![ddg-tui-linux](https://github.com/wiseaidotdev/duckduckgo/blob/main/assets/linux.png) | ![ddg-tui-windows](https://github.com/wiseaidotdev/duckduckgo/blob/main/assets/windows.PNG) | ![ddg-tui-linux](https://github.com/wiseaidotdev/duckduckgo/blob/main/assets/linux.png) | ![ddg-tui-linux](https://github.com/wiseaidotdev/duckduckgo/blob/main/assets/linux.png) |
+| [Download `ddg` binary](https://github.com/wiseaidotdev/duckduckgo/releases/latest/download/ddg) | [Download `ddg.exe` binary](https://github.com/wiseaidotdev/duckduckgo/releases/latest/download/ddg.exe) | `docker pull wiseaidev/ddg` | `apt install ddg-rs` (TODO: Publish)|
+| `cargo install duckduckgo --features rust-binary` | `cargo install duckduckgo --features rust-binary` | `docker run -it wiseaidev/ddg` | `dnf install ddg-rs` (TODO: Publish)|
+| `ddg` ← launches TUI | `ddg` ← launches TUI | [Read DOCKER.md](https://github.com/wiseaidotdev/duckduckgo/blob/main/DOCKER.md) | [Read PACKAGING.md](https://github.com/wiseaidotdev/duckduckgo/blob/main/PACKAGING.md) |
 
 </div>
 
@@ -72,7 +72,7 @@ with `pip install ddg-rs`. The package is built with
 CPython versions.
 
 The Python module exposes the `Browser`, `SearchParams`, `LiteSearchResult`,
-`ImageResult`, and `NewsResult` types. All network methods are synchronous —
+`ImageResult`, and `NewsResult` types. All network methods are synchronous -
 they drive an embedded Tokio runtime so callers do not need an event loop.
 
 <!-- absolute url for docs.rs cause PYTHON.md is not included in crate for minimal bundle size -->
@@ -108,6 +108,22 @@ choice of result backends.
 For the full option reference and usage examples, see the
 **[CLI documentation](https://github.com/wiseaidotdev/duckduckgo/blob/main/CLI.md)** or run `ddg --help` after installing with
 `cargo install duckduckgo --features rust-binary`.
+
+## 🐳 Docker Deployment
+
+`duckduckgo` is completely containerized and includes the CLI and TUI pre-installed.
+
+<!-- absolute url for docs.rs cause DOCKER.md is not included in crate for minimal bundle size -->
+
+For instructions on pulling the container and usage, refer to the **[Docker usage guide](https://github.com/wiseaidotdev/duckduckgo/blob/main/DOCKER.md)**.
+
+## 📦 Linux Distros Packaging (TODO)
+
+For system-wide installations that rely on native package managers, the project includes `.deb` and `.rpm` packaging pipelines. This enables installation via `apt` (Debian/Ubuntu/Kali) and `dnf` (RedHat/Fedora).
+
+<!-- absolute url for docs.rs cause PACKAGING.md is not included in crate for minimal bundle size -->
+
+For packaging instructions and build flows, refer to the **[Linux Packaging guide](https://github.com/wiseaidotdev/duckduckgo/blob/main/PACKAGING.md)**.
 
 ## 🔒 Privacy
 

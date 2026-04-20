@@ -1,0 +1,23 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE = 1
+export RUSTFLAGS = -C strip=symbols
+export CARGO_BUILD_FLAGS = --release --features=rust-binary
+
+%:
+	dh $@
+
+override_dh_auto_clean:
+	cargo clean || true
+	rm -rf target .cargo
+
+override_dh_auto_build:
+	cargo build $(CARGO_BUILD_FLAGS)
+
+override_dh_auto_install:
+	install -Dm755 target/release/ddg debian/ddg-rs/usr/bin/ddg
+	install -Dm644 README.md debian/ddg-rs/usr/share/doc/ddg-rs/README.md
+
+override_dh_auto_test:
+	# Skip tests during package build (requires network access)
+	@echo "Skipping tests - requires network"

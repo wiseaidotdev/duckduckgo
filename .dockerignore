@@ -1,0 +1,13 @@
+target/
+.git/
+.github/
+python/
+assets/
+bin/
+tests/
+debian/
+rpm/
+*.md
+!README.md
+!RUST.md
+!WASM.md
