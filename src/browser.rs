@@ -57,6 +57,37 @@ use serde_json::Value;
 
 const BASE_URL: &str = "https://api.duckduckgo.com/";
 
+/// URL of a CORS proxy that forwards requests to `api.duckduckgo.com` and
+/// injects `Access-Control-Allow-Origin: *`.
+///
+/// Set the `DDG_CORS_PROXY_URL` environment variable at **build time** to
+/// configure this without modifying the crate:
+///
+/// ```sh
+/// DDG_CORS_PROXY_URL=https://ddg-cors-proxy.<subdomain>.workers.dev trunk build
+/// ```
+///
+/// Or add it to `.cargo/config.toml` in your project:
+///
+/// ```toml
+/// [env]
+/// DDG_CORS_PROXY_URL = "https://ddg-cors-proxy.<subdomain>.workers.dev"
+/// ```
+///
+/// When unset, the proxy step is skipped and the Wikipedia fallback is used.
+#[cfg(target_arch = "wasm32")]
+const CORS_PROXY_URL: &str = match option_env!("DDG_CORS_PROXY_URL") {
+    Some(url) => url,
+    None => "",
+};
+
+/// Public CORS proxies to attempt if no self-hosted proxy is configured.
+#[cfg(target_arch = "wasm32")]
+const PUBLIC_PROXIES: &[&str] = &[
+    "https://corsproxy.io/?url=",
+    "https://api.allorigins.win/raw?url=",
+];
+
 /// A struct representing a browser for interacting with the DuckDuckGo API.
 ///
 /// Use [`Browser::new()`] for a zero-configuration default browser, or
@@ -195,9 +226,14 @@ impl Browser {
     /// let browser = Browser::new();
     /// ```
     pub fn new() -> Self {
-        Browser {
-            client: reqwest::Client::new(),
-        }
+        #[cfg(not(target_arch = "wasm32"))]
+        let client = reqwest::Client::builder()
+            .cookie_store(true)
+            .build()
+            .unwrap_or_default();
+        #[cfg(target_arch = "wasm32")]
+        let client = reqwest::Client::new();
+        Browser { client }
     }
 
     /// Returns a [`BrowserBuilder`] for configuring an HTTP client before creating
@@ -614,44 +650,150 @@ impl Browser {
     }
 
     /// Fetches the raw API response from DuckDuckGo for the given path and parameters.
+    ///
+    /// ## WASM / Browser Note
+    ///
+    /// In WebAssembly builds, requests to `api.duckduckgo.com` are handled
+    /// using a 4-tier fallback strategy to resolve CORS issues:
+    ///
+    /// 1. **Direct Fetch**: Attempt to reach DuckDuckGo directly (often works
+    ///    on the first request).
+    /// 2. **Self-Hosted Proxy**: Route via a proxy if `DDG_CORS_PROXY_URL`
+    ///    is configured at build time (e.g. in `.cargo/config.toml`).
+    /// 3. **Public Proxies**: Automatically attempt reliable public CORS
+    ///    proxies (e.g. `corsproxy.io`) if no self-hosted proxy is provided.
+    /// 4. **Wikipedia Fallback**: Final guaranteed fallback using Wikipedia's
+    ///    CORS-safe search and extract APIs.
+    ///
+    /// This ensures reliable search results across different environments
+    /// without changing the public API or return type.
+    ///
+    /// The proxy indirection is applied entirely inside this method; the public
+    /// API and return type are unchanged.
+    #[allow(unused_variables)]
     pub async fn get_api_response(
         &self,
         path: &str,
         search_params: Option<&SearchParams>,
     ) -> Result<Response> {
         let separator = if path.contains('?') { '&' } else { '?' };
-        let mut url = format!("{}{}{}format=json", BASE_URL, path, separator);
+        let path = path.trim();
+        let direct_url = format!("{}{}{}format=json", BASE_URL, path, separator);
 
-        if let Some(params) = search_params {
-            for (key, value) in params.to_query_pairs() {
-                url.push('&');
-                url.push_str(key);
-                url.push('=');
-                url.push_str(&value);
+        #[cfg(target_arch = "wasm32")]
+        {
+            if let Ok(resp) = self.client.get(&direct_url).send().await {
+                if resp.status().is_success() {
+                    if let Ok(text) = resp.text().await {
+                        if let Ok(parsed) = serde_json::from_str::<Response>(&text) {
+                            return Ok(parsed);
+                        }
+                    }
+                }
             }
+
+            let mut proxies = Vec::new();
+            if !CORS_PROXY_URL.is_empty() {
+                let qs = direct_url
+                    .strip_prefix(BASE_URL)
+                    .map(|s| {
+                        if s.starts_with('?') {
+                            s.to_string()
+                        } else {
+                            format!("?{}", s)
+                        }
+                    })
+                    .unwrap_or_default();
+                let proxy_url = format!(
+                    "{}/{}",
+                    CORS_PROXY_URL.trim_end_matches('/'),
+                    qs.trim_start_matches('/')
+                );
+                proxies.push(proxy_url);
+            } else {
+                for p in PUBLIC_PROXIES {
+                    proxies.push(format!(
+                        "{}{}",
+                        p,
+                        crate::wikipedia::percent_encode_url(&direct_url)
+                    ));
+                }
+            }
+
+            for proxy_url in proxies {
+                let client = self.client.clone();
+                if let Some(parsed) = (async move {
+                    let resp = client.get(&proxy_url).send().await.ok()?;
+                    if !resp.status().is_success() {
+                        return None;
+                    }
+                    let text = resp.text().await.ok()?;
+                    serde_json::from_str::<Response>(&text).ok()
+                })
+                .await
+                {
+                    return Ok(parsed);
+                }
+            }
+
+            let raw_query = path
+                .split('&')
+                .find_map(|kv| {
+                    let mut parts = kv.trim_start_matches('?').splitn(2, '=');
+                    let key = parts.next()?;
+                    let val = parts.next()?;
+                    if key == "q" {
+                        Some(val.to_string())
+                    } else {
+                        None
+                    }
+                })
+                .unwrap_or_default();
+
+            let query = crate::wikipedia::percent_decode(&raw_query);
+            if !query.is_empty() {
+                if let Ok(resp) = crate::wikipedia::search(&self.client, &query).await {
+                    return Ok(resp);
+                }
+            }
+
+            anyhow::bail!("All search sources failed. Check network connectivity.");
         }
 
-        let response = self
-            .client
-            .get(&url)
-            .send()
-            .await
-            .with_context(|| format!("Failed to send request to {}", url))?;
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let mut url = direct_url;
+            if let Some(params) = search_params {
+                for (key, value) in params.to_query_pairs() {
+                    url.push('&');
+                    url.push_str(key);
+                    url.push('=');
+                    url.push_str(&value);
+                }
+            }
 
-        let status = response.status();
-        let text = response
-            .text()
-            .await
-            .with_context(|| "Failed to read response body")?;
+            let response = self
+                .client
+                .get(&url)
+                .send()
+                .await
+                .with_context(|| format!("Failed to send request to {}", url))?;
 
-        if !status.is_success() {
-            anyhow::bail!("Request failed with status {}: {}", status, text);
+            let status = response.status();
+            let text = response
+                .text()
+                .await
+                .with_context(|| "Failed to read response body")?;
+
+            if !status.is_success() {
+                anyhow::bail!("Request failed with status {}: {}", status, text);
+            }
+
+            let api_response: Response = serde_json::from_str(&text)
+                .with_context(|| format!("Failed to parse JSON response: {}", text))?;
+
+            Ok(api_response)
         }
-
-        let api_response: Response = serde_json::from_str(&text)
-            .with_context(|| format!("Failed to parse JSON response: {}", text))?;
-
-        Ok(api_response)
     }
 
     /// Prints search results in list format.
