@@ -45,7 +45,7 @@ To use `duckduckgo` in your WASM project, simply add it to your `Cargo.toml`. By
 
 ```toml
 [dependencies]
-duckduckgo = "0.3.1"
+duckduckgo = "0.3.2"
 ```
 
 ### Minimal Example (Yew)
