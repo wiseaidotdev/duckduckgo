@@ -53,20 +53,20 @@ jobs:
         run: |
           mkdir -p ~/rpmbuild/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
           cp rpm/ddg-rs.spec ~/rpmbuild/SPECS/
-          
+
           if [[ $GITHUB_REF == refs/tags/v* ]]; then
             VERSION=${GITHUB_REF#refs/tags/v}
           else
             VERSION=$(grep -m 1 "^version =" Cargo.toml | sed 's/.*"\(.*\)".*/\1/')-${GITHUB_SHA::8}
           fi
-          
+
           VERSION_CLEAN=$(echo "$VERSION" | sed 's|/|-|g' | tr -d '\n\r')
           VERSION_ONLY=$(echo "${VERSION_CLEAN%%-*}" | tr -d '\n\r')
-          
+
           sed -i "s@Version:.*\$@Version: $VERSION_ONLY@" ~/rpmbuild/SPECS/ddg-rs.spec
-          
+
           tar -czvf ~/rpmbuild/SOURCES/ddg-rs-${VERSION_ONLY}.tar.gz --transform "s,^\.,ddg-rs-${VERSION_ONLY}," --exclude=.git .
-          
+
           echo "VERSION_ONLY=$VERSION_ONLY" >> $GITHUB_ENV
 
       - name: Build RPM package

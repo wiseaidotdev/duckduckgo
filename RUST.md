@@ -8,7 +8,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-duckduckgo = "0.2.3"
+duckduckgo = "0.3.1"
 ```
 
 ## 📚 Library Usage

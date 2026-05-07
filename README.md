@@ -12,12 +12,12 @@
 
 > `duckduckgo` is a multi-language toolkit for searching DuckDuckGo from code or the command line. The core is written entirely in Rust and compiled to a native extension, so Python and Node.js callers enjoy the same performance and correctness guarantees as the Rust library, with no runtime dependencies beyond the native extension itself 🗿.
 
-| 🐧 Linux `(Recommended)` | 🪟 Windows | 🐳 Docker | 📦 Linux Distros |
-| :------: | :--------: | :--------: | :--------: |
-| ![ddg-tui-linux](https://github.com/wiseaidotdev/duckduckgo/blob/main/assets/linux.png) | ![ddg-tui-windows](https://github.com/wiseaidotdev/duckduckgo/blob/main/assets/windows.PNG) | ![ddg-tui-linux](https://github.com/wiseaidotdev/duckduckgo/blob/main/assets/linux.png) | ![ddg-tui-linux](https://github.com/wiseaidotdev/duckduckgo/blob/main/assets/linux.png) |
-| [Download `ddg` binary](https://github.com/wiseaidotdev/duckduckgo/releases/latest/download/ddg) | [Download `ddg.exe` binary](https://github.com/wiseaidotdev/duckduckgo/releases/latest/download/ddg.exe) | `docker pull wiseaidev/ddg` | `apt install ddg-rs` (TODO: Publish)|
-| `cargo install duckduckgo --features rust-binary` | `cargo install duckduckgo --features rust-binary` | `docker run -it wiseaidev/ddg` | `dnf install ddg-rs` (TODO: Publish)|
-| `ddg` ← launches TUI | `ddg` ← launches TUI | [Read DOCKER.md](https://github.com/wiseaidotdev/duckduckgo/blob/main/DOCKER.md) | [Read PACKAGING.md](https://github.com/wiseaidotdev/duckduckgo/blob/main/PACKAGING.md) |
+|                                     🐧 Linux `(Recommended)`                                     |                                                🪟 Windows                                                |                                        🐳 Docker                                        |                                    📦 Linux Distros                                     |
+| :----------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------: |
+|     ![ddg-tui-linux](https://github.com/wiseaidotdev/duckduckgo/blob/main/assets/linux.png)      |       ![ddg-tui-windows](https://github.com/wiseaidotdev/duckduckgo/blob/main/assets/windows.PNG)        | ![ddg-tui-linux](https://github.com/wiseaidotdev/duckduckgo/blob/main/assets/linux.png) | ![ddg-tui-linux](https://github.com/wiseaidotdev/duckduckgo/blob/main/assets/linux.png) |
+| [Download `ddg` binary](https://github.com/wiseaidotdev/duckduckgo/releases/latest/download/ddg) | [Download `ddg.exe` binary](https://github.com/wiseaidotdev/duckduckgo/releases/latest/download/ddg.exe) |                               `docker pull wiseaidev/ddg`                               |                          `apt install ddg-rs` (TODO: Publish)                           |
+|                        `cargo install duckduckgo --features rust-binary`                         |                            `cargo install duckduckgo --features rust-binary`                             |                             `docker run -it wiseaidev/ddg`                              |                          `dnf install ddg-rs` (TODO: Publish)                           |
+|                                       `ddg` ← launches TUI                                       |                                           `ddg` ← launches TUI                                           |    [Read DOCKER.md](https://github.com/wiseaidotdev/duckduckgo/blob/main/DOCKER.md)     | [Read PACKAGING.md](https://github.com/wiseaidotdev/duckduckgo/blob/main/PACKAGING.md)  |
 
 </div>
 
@@ -56,6 +56,8 @@ The crate ships the following Cargo features:
 ## 🌐 WebAssembly (WASM)
 
 `duckduckgo` natively supports the `wasm32-unknown-unknown` target! Because it uses `reqwest` under the hood, it seamlessly switches to the `fetch` API when deployed in the browser.
+
+To resolve CORS issues, the library uses a **4-tier strategy**: direct DDG calls, optional self-hosted or public proxies, and a guaranteed **Wikipedia fallback**. This ensures your search always returns a result, even without a proxy.
 
 This makes it perfect for client-side search inside Rust frontend frameworks like **Yew**, **Dioxus**, and **Leptos**. We actively use this technique in the [`llm/examples/chat`](https://github.com/wiseaidotdev/lmm/tree/main/examples/chat) application.
 

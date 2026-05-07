@@ -21,6 +21,7 @@ pub mod params;
 pub mod response;
 pub mod topic;
 pub mod user_agents;
+pub mod wikipedia;
 
 #[cfg(feature = "cli")]
 pub mod app;
