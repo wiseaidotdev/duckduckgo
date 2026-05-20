@@ -114,10 +114,10 @@ const params = new SearchParams()
   .region("us-en")
   .safeSearch("moderate")
   .theme("dark")
-  .source("my_node_cli");
+  .source("ddg-rs");
 
 const browser = new Browser();
-const response = browser.instantAnswer("nodejs event loop", params);
+const response = browser.instantAnswer("encryption", params);
 ```
 
 ## 📖 Component API Reference
