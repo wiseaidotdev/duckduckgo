@@ -106,7 +106,7 @@ params = (
     .region("us-en")
     .safe_search("moderate")
     .theme("dark")
-    .source("my_python_app")
+    .source("ddg-rs")
 )
 
 browser = Browser()
