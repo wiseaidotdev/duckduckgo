@@ -17,7 +17,7 @@ COPY ./WASM.md ./
 
 RUN cargo build --release --features="rust-binary"
 
-FROM alpine:3.22.4
+FROM alpine:3.24.4
 
 RUN apk add --no-cache openssl ca-certificates sudo && \
     addgroup -S duckduckgo && \

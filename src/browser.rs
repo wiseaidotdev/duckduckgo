@@ -440,7 +440,7 @@ impl Browser {
     /// #[tokio::main]
     /// async fn main() -> anyhow::Result<()> {
     ///     let browser = Browser::new();
-    ///     let user_agent = get("mozilla").unwrap();
+    ///     let user_agent = get("firefox_2592").unwrap();
     ///     let images = browser.images("rustacean", "wt-wt", true, Some(5), user_agent).await?;
     ///     assert!(!images.is_empty());
     ///     Ok(())
