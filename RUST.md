@@ -106,6 +106,9 @@ async fn main() -> anyhow::Result<()> {
 }
 ```
 
+> [!TIP]
+> DuckDuckGo API requests can occasionally fail if flagged for suspicious activity. Rotating user agents may help bypass these restrictions, and this crate provides around 9,600 valid options.
+
 ## 🔧 Search Parameters
 
 The `params` module provides strongly-typed enums for every documented DuckDuckGo URL parameter. Pass a `SearchParams` instance to `search()`, `advanced_search()`, or `search_operators()`.
