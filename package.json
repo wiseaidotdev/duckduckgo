@@ -1,6 +1,6 @@
 {
   "name": "ddg-rs",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "main": "index.js",
   "types": "index.d.ts",
   "bin": {
@@ -35,15 +35,17 @@
   ],
   "napi": {
     "binaryName": "ddg",
-    "triples": {
-      "defaults": true
-    }
+    "targets": [
+      "x86_64-unknown-linux-gnu",
+      "x86_64-apple-darwin",
+      "aarch64-apple-darwin",
+      "x86_64-pc-windows-msvc"
+    ]
   },
   "scripts": {
     "artifacts": "napi artifacts",
     "build": "napi build --platform --release --features node",
     "build:debug": "napi build --platform --features node",
-    "prepublishOnly": "napi prepublish -t npm",
     "version": "napi version"
   },
   "devDependencies": {
@@ -51,5 +53,6 @@
   },
   "engines": {
     "node": ">= 22"
-  }
+  },
+  "optionalDependencies": {}
 }
