@@ -20,7 +20,7 @@
 //! - [DuckDuckGo URL Parameters](https://duckduckgo.com/duckduckgo-help-pages/settings/params/)
 
 use crate::browser::Browser;
-use crate::params::SearchParams;
+use crate::params::{Region, SafeSearch, SearchParams, Theme};
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
@@ -39,7 +39,6 @@ where
 }
 
 fn parse_region(code: &str) -> PyResult<crate::params::Region> {
-    use crate::params::Region;
     match code {
         "xa-ar" => Ok(Region::XaAr),
         "xa-en" => Ok(Region::XaEn),
@@ -283,7 +282,6 @@ impl PySearchParams {
     /// Raises:
     ///     RuntimeError: If the supplied level is not recognised.
     pub fn safe_search(&self, level: String) -> PyResult<PySearchParams> {
-        use crate::params::SafeSearch;
         let safe = match level.as_str() {
             "on" => SafeSearch::On,
             "moderate" => SafeSearch::Moderate,
@@ -305,7 +303,6 @@ impl PySearchParams {
     ///     name: One of ``"default"``, ``"contrast"``, ``"retro"``,
     ///           ``"dark"``, ``"terminal"``, or a custom hex colour code.
     pub fn theme(&self, name: String) -> PySearchParams {
-        use crate::params::Theme;
         let theme = match name.as_str() {
             "default" => Theme::Default,
             "contrast" => Theme::Contrast,

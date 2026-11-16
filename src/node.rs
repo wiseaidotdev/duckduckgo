@@ -22,7 +22,7 @@
 //! - [`napi-rs` documentation](https://napi.rs/)
 
 use crate::browser::Browser;
-use crate::params::SearchParams;
+use crate::params::{Region, SafeSearch, SearchParams, Theme};
 use napi_derive::napi;
 
 fn block_on<F, T, E>(future: F) -> napi::Result<T>
@@ -39,7 +39,6 @@ where
 }
 
 fn parse_region(code: &str) -> napi::Result<crate::params::Region> {
-    use crate::params::Region;
     match code {
         "xa-ar" => Ok(Region::XaAr),
         "xa-en" => Ok(Region::XaEn),
@@ -251,7 +250,6 @@ impl NapiSearchParams {
     /// Accepted values: ``"on"``, ``"moderate"``, ``"off"``.
     #[napi]
     pub fn safe_search(&self, level: String) -> napi::Result<NapiSearchParams> {
-        use crate::params::SafeSearch;
         let safe = match level.as_str() {
             "on" => SafeSearch::On,
             "moderate" => SafeSearch::Moderate,
@@ -273,7 +271,6 @@ impl NapiSearchParams {
     /// ``"dark"``, ``"terminal"``, or a custom hex colour code.
     #[napi]
     pub fn theme(&self, name: String) -> NapiSearchParams {
-        use crate::params::Theme;
         let theme = match name.as_str() {
             "default" => Theme::Default,
             "contrast" => Theme::Contrast,

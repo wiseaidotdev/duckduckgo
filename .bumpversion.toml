@@ -10,5 +10,5 @@ search = "version": "{current_version}"
 replace = "version": "{new_version}"
 
 [bumpversion:file:python/ddg/__init__.py]
-search = "__version__ = '{current_version}'"
-replace = "__version__ = '{new_version}'"
+search = "__version__ = "{current_version}""
+replace = "__version__ = "{new_version}""
